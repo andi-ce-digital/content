@@ -353,8 +353,8 @@ export function BrandVoicePage() {
       )}
 
       {isWizardOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4">
-          <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/30 to-sky-50/50 p-5 shadow-soft backdrop-blur">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/25 px-4">
+          <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-indigo-100 bg-white p-5 shadow-soft">
             <div className="pointer-events-none absolute -left-10 -top-16 h-40 w-40 rounded-full bg-indigo-100/70 blur-3xl" />
             <div className="pointer-events-none absolute -right-10 bottom-0 h-40 w-40 rounded-full bg-sky-100/70 blur-3xl" />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-300/50 to-transparent" />
@@ -371,7 +371,7 @@ export function BrandVoicePage() {
                 <button
                   type="button"
                   onClick={closeWizard}
-                  className="rounded-full border border-indigo-200 bg-indigo-50/70 px-2 py-1 text-[11px] font-medium text-indigo-700 shadow-sm hover:bg-indigo-100"
+                  className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-medium text-indigo-700 shadow-sm hover:bg-indigo-100"
                 >
                   Schließen
                 </button>
@@ -379,7 +379,7 @@ export function BrandVoicePage() {
 
               <div className="flex items-center justify-between text-[10px] text-slate-500">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-100/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-700 shadow-sm animate-pulse">
+                  <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-700 shadow-sm">
                     Schritt {wizardStep + 1} von {QUESTIONS.length + 1}
                   </span>
                   <span>
@@ -396,7 +396,7 @@ export function BrandVoicePage() {
                 </p>
               )}
 
-              <div className="rounded-2xl border border-indigo-100 bg-white/70 p-4 shadow-sm">
+              <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm">
                 {wizardStep === 0 ? (
                   <div className="space-y-2">
                     <p className="text-[11px] font-medium text-slate-700">

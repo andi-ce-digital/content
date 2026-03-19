@@ -256,14 +256,16 @@ function App() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="hidden border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 lg:inline-flex"
+                className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
               >
                 Demo Workspace
               </Button>
               <Button size="sm" className="hidden lg:inline-flex">Neuen Creator analysieren</Button>
-              <button className="hidden h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white lg:flex">
-                JP
-              </button>
+              <img
+                src="/favicon.svg"
+                alt="content-saas logo"
+                className="hidden h-8 w-8 object-contain lg:block"
+              />
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}

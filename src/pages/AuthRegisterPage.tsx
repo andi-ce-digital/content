@@ -129,14 +129,14 @@ export function AuthRegisterPage() {
                 required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="z.B. JP"
+                placeholder="z.B. Max"
               />
               <Input
                 label="Nachname"
                 required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="z.B. Morgan"
+                placeholder="z.B. Mustermann"
               />
             </div>
             <Input
