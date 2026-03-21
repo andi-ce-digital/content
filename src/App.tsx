@@ -274,7 +274,10 @@ function App() {
                 className="h-7 w-auto max-w-[min(160px,42vw)] object-contain object-left"
               />
             </NavLink>
-            <div className="hidden min-w-0 flex-col gap-0 py-0.5 lg:flex">
+            <div className="hidden min-w-0 flex-col gap-1.5 py-0.5 lg:flex">
+              <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                Content Intelligence
+              </p>
               <h1 className="text-sm font-semibold tracking-tight text-slate-900">
                 Deine Content-Strategie, gespeist aus echten Creators
               </h1>
@@ -338,7 +341,10 @@ function App() {
                       className="h-7 w-auto max-w-[min(200px,55vw)] object-contain object-left sm:h-8"
                     />
                   </NavLink>
-                  <h2 className="mt-3 text-sm font-semibold tracking-tight text-slate-900">
+                  <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                    Content Intelligence
+                  </p>
+                  <h2 className="mt-1 text-sm font-semibold tracking-tight text-slate-900">
                     Deine Content-Strategie, gespeist aus echten Creators
                   </h2>
                 </div>
