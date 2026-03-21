@@ -4,15 +4,56 @@ import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
+import { Textarea } from '../components/ui/Textarea'
 import { cn } from '../lib/utils'
+import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../auth/AuthContext'
-import { SendHorizontal } from 'lucide-react'
+import { PenLine, SendHorizontal } from 'lucide-react'
+import { StudioReelShowcase } from '../components/studio/StudioReelShowcase'
+import { useUserReelSlides } from '../hooks/useUserReelSlides'
 
 type ChatMessage = {
   id: string
   role: 'user' | 'assistant'
   content: string
   createdAt: number
+}
+
+/** Animierter Fullscreen-Hintergrund (CSS + WebGL). */
+function AiStudioBackground() {
+  return (
+    <div className="pointer-events-none fixed inset-0 -z-10 w-full max-w-[100vw] overflow-hidden">
+      <div className="ai-studio-bg-mesh absolute inset-0 max-w-full" aria-hidden />
+      <div
+        className="ai-studio-orb ai-studio-orb--a absolute blur-[100px]"
+        aria-hidden
+      />
+      <div
+        className="ai-studio-orb ai-studio-orb--b absolute blur-[100px]"
+        aria-hidden
+      />
+      <div
+        className="ai-studio-orb ai-studio-orb--c absolute blur-[80px]"
+        aria-hidden
+      />
+      <div className="absolute inset-0 opacity-[0.32] sm:opacity-40 md:opacity-[0.45]">
+        <Canvas
+          camera={{ position: [0, 0, 6], fov: 55 }}
+          className="h-full min-h-[100dvh] w-full"
+          style={{ width: '100%', height: '100%' }}
+        >
+          <color attach="background" args={['#ffffff']} />
+          <ambientLight intensity={0.5} />
+          <FloatingScene />
+          <OrbitControls enableZoom={false} enablePan={false} />
+        </Canvas>
+      </div>
+      <div
+        className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/45 to-white/92"
+        aria-hidden
+      />
+    </div>
+  )
 }
 
 function FloatingScene() {
@@ -66,20 +107,85 @@ function FloatingScene() {
   )
 }
 
+const QUICK_SUGGESTIONS = [
+  'Gib mir 5 Hook-Ideen für meine Zielgruppe',
+  'Erkläre mir eine einfache Content-Strategie in 5 Punkten',
+  'Formuliere eine freundliche Antwort auf eine Kundenanfrage',
+] as const
+
+const EXAMPLE_QUESTIONS = [
+  'Wie schreibe ich einen stärkeren Hook in den ersten 3 Sekunden?',
+  'Welche KPIs sind für Reels am sinnvollsten?',
+  'Wie formuliere ich einen klaren CTA ohne zu verkäuferisch zu wirken?',
+] as const
+
+function AssistantComposer({
+  value,
+  onChange,
+  disabled,
+  onSend,
+  placeholder,
+}: {
+  value: string
+  onChange: (next: string) => void
+  disabled?: boolean
+  onSend: () => void
+  placeholder: string
+}) {
+  return (
+    <div className="flex min-w-0 max-w-full flex-nowrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white/80 px-2 py-1.5 shadow-sm backdrop-blur sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-3 sm:px-3 sm:py-2.5">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900/5 text-indigo-700 sm:h-9 sm:w-9">
+        <PenLine className="h-4 w-4" />
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-1 items-center sm:min-h-[36px]">
+        <Textarea
+          noWrapper
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={1}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              if (!disabled) onSend()
+            }
+          }}
+          placeholder={placeholder}
+          className="w-full min-h-0 resize-none border-0 bg-transparent py-1 text-xs leading-snug text-slate-800 outline-none placeholder:text-slate-400 focus:ring-0 sm:min-h-[36px] sm:py-2 sm:leading-5"
+          style={{ maxHeight: 120 }}
+        />
+      </div>
+
+      <Button
+        type="button"
+        onClick={onSend}
+        disabled={disabled}
+        className="h-8 shrink-0 justify-self-end rounded-full bg-indigo-600 px-0 text-white hover:bg-indigo-700 sm:h-9 sm:justify-self-auto sm:min-w-0 sm:px-4 [&>span]:inline-flex [&>span]:h-8 [&>span]:min-w-8 [&>span]:items-center [&>span]:justify-center [&>span]:gap-2 sm:[&>span]:h-9 sm:[&>span]:min-w-0 sm:[&>span]:px-4"
+        aria-label="Senden"
+      >
+        <SendHorizontal className="h-4 w-4 shrink-0" strokeWidth={2.25} />
+        <span className="hidden sm:inline">Senden</span>
+      </Button>
+    </div>
+  )
+}
+
 export function AiAssistantPage() {
   const { user } = useAuth()
+  const [profileFullName, setProfileFullName] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: 'welcome',
       role: 'assistant',
       content:
-        'Hi! Frag mich nach Content-Ideen, Hook-Varianten, Brand-Voice-Formulierungen oder einer Strategie. Ich helfe dir sofort.',
+        'Hallo! Frag mich nach Content-Ideen, Hook-Varianten, Brand-Voice-Formulierungen oder einer Strategie – ich helfe dir sofort.',
       createdAt: Date.now(),
     },
   ])
   const [sending, setSending] = useState(false)
   const listRef = useRef<HTMLDivElement | null>(null)
+  const [stage, setStage] = useState<'welcome' | 'chat'>('welcome')
+  const { slides: userReelSlides, loading: userReelsLoading } = useUserReelSlides()
 
   const lastUserMessage = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -92,9 +198,44 @@ export function AiAssistantPage() {
     listRef.current?.scrollTo({ top: 999999, behavior: 'smooth' })
   }, [messages.length])
 
+  useEffect(() => {
+    async function loadProfileName() {
+      if (!supabase || !user) {
+        setProfileFullName(null)
+        return
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .maybeSingle<{
+          first_name: string | null
+          last_name: string | null
+        }>()
+      const fullName = `${data?.first_name ?? ''} ${data?.last_name ?? ''}`.trim()
+      setProfileFullName(fullName.length > 0 ? fullName : null)
+    }
+    void loadProfileName()
+  }, [user?.id])
+
+  const greetingName =
+    profileFullName ?? user?.email?.split('@')[0] ?? ''
+
+  const salutation = useMemo(() => {
+    const h = new Date().getHours()
+    if (h < 11) return 'Guten Morgen'
+    if (h < 18) return 'Guten Tag'
+    return 'Guten Abend'
+  }, [])
+
   async function handleSend() {
     const text = input.trim()
     if (!text || sending) return
+
+    // Switch erst nach dem Absenden: Welcome bleibt sichtbar,
+    // bis der User wirklich eine Nachricht geschickt hat.
+    setStage('chat')
+
     setSending(true)
     setInput('')
 
@@ -156,132 +297,312 @@ export function AiAssistantPage() {
     setSending(false)
   }
 
-  const quickPrompts = useMemo(
-    () => [
-      'Gib mir 7 Hook-Varianten für eine {Zielgruppe} zum Thema {Thema}.',
-      'Erstelle eine 5-Tage Content-Serie mit CTA.',
-      'Formuliere meine Brand-Voice in 10 Sätzen + 2 Beispielposts.',
-      'Schreibe 3 kurze CTAs, die Kommentare statt Saves holen.',
-    ],
-    [],
-  )
-
   return (
-    <div className="relative min-h-screen">
-      <div className="pointer-events-none absolute inset-0 -z-10 hidden md:block">
-        <Canvas
-          camera={{ position: [0, 0, 6], fov: 55 }}
-          style={{ width: '100%', height: '100%' }}
+    <div className="relative isolate min-h-screen w-full min-w-0 max-w-full overflow-x-clip">
+      <AiStudioBackground />
+
+      <div
+        className={cn(
+          'relative z-0 mx-auto w-full min-w-0 max-w-full',
+          stage === 'welcome'
+            ? 'flex min-h-[100dvh] flex-col px-3 pb-10 pt-5 sm:px-8 sm:pb-14 sm:pt-10 lg:px-14'
+            : 'flex max-w-full min-h-0 flex-1 flex-col px-3 py-4 sm:px-4 sm:py-5 lg:max-w-7xl',
+        )}
+      >
+        <div
+          className={cn(
+            'relative min-w-0',
+            stage === 'welcome' ? 'flex min-h-0 flex-1 flex-col' : 'flex min-h-0 flex-1 flex-col',
+          )}
         >
-          <color attach="background" args={['#ffffff']} />
-          <ambientLight intensity={0.5} />
-          <FloatingScene />
-          <OrbitControls enableZoom={false} enablePan={false} />
-        </Canvas>
-        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/55 to-white/80" />
-      </div>
+          <div
+            className={cn(
+              'transition-opacity duration-300',
+              stage === 'welcome'
+                ? 'flex min-h-0 flex-1 flex-col opacity-100'
+                : 'pointer-events-none absolute inset-0 opacity-0',
+            )}
+          >
+            {/* Full-Page-Willkommen: Header → Text → Abstand → Eingabe (im Fluss, nicht fixed) */}
+            <div className="flex min-h-0 flex-1 flex-col">
+              <header className="flex w-full min-w-0 shrink-0 flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+                <div className="max-w-2xl min-w-0 text-left">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                    KI-Studio
+                  </p>
+                  <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:mt-3 sm:text-3xl md:text-4xl">
+                    {user ? `${salutation}, ${greetingName}` : salutation}
+                  </h1>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+                    Wobei kann ich dir{' '}
+                    <span className="font-semibold text-indigo-700">
+                      <span className="rounded-md bg-indigo-100/90 px-1.5 py-0.5">
+                        heute helfen?
+                      </span>
+                    </span>
+                  </p>
+                </div>
+                <div className="hidden shrink-0 overflow-hidden sm:block md:pt-1">
+                  <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 shadow-[0_24px_60px_rgba(139,92,246,0.35)] sm:h-20 sm:w-20 md:h-24 md:w-24">
+                    <div className="absolute -inset-4 rounded-full bg-indigo-500/20 blur-2xl sm:-inset-5 md:-inset-6" />
+                    <div className="relative h-5 w-5 rounded-full bg-white/35 md:h-6 md:w-6" />
+                  </div>
+                </div>
+              </header>
 
-      <div className="mx-auto max-w-4xl px-4 py-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400">
-              AI Assistant
-            </p>
-            <h1 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
-              Chat mit deinem Content-Coach
-            </h1>
-          </div>
-          <span className="hidden rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-[10px] font-medium text-slate-600 md:inline-flex">
-            {user ? `Hallo, ${user.email?.split('@')[0]}` : 'Demo Mode'}
-          </span>
-        </div>
+              <p className="mt-5 max-w-2xl text-left text-sm leading-relaxed text-slate-500 sm:mt-6 md:mt-8 md:text-[15px]">
+                Content-Ideen, Hooks, Brand Voice oder Strategie – stell eine Frage oder gib
+                einen Auftrag ein.
+              </p>
 
-        <Card className="flex min-h-[72vh] flex-col overflow-hidden">
-          <div className="flex-1 bg-slate-50/60">
-            <div
-              ref={listRef}
-              className="h-[72vh] space-y-4 overflow-y-auto p-4"
-            >
-              {messages.map((m) => {
-                const isUser = m.role === 'user'
-                return (
-                  <div
-                    key={m.id}
-                    className={cn(
-                      'flex w-full',
-                      isUser ? 'justify-end' : 'justify-start',
-                    )}
-                  >
-                    <div className={cn('max-w-[85%] rounded-2xl border px-4 py-3 text-xs shadow-sm', isUser
-                      ? 'border-indigo-200 bg-indigo-600 text-white'
-                      : 'border-slate-200 bg-white text-slate-800'
-                    )}>
-                      {m.content ? (
-                        <p className="whitespace-pre-wrap leading-relaxed">
-                          {m.content}
-                        </p>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-white/70" />
-                          <span className="h-2 w-2 rounded-full bg-white/70" />
-                          <span className="h-2 w-2 rounded-full bg-white/70" />
-                        </div>
-                      )}
+              <StudioReelShowcase
+                slides={userReelSlides}
+                loading={userReelsLoading}
+                className="mt-6 shrink-0 md:mt-8"
+              />
+
+              <div className="min-h-0 flex-1" aria-hidden />
+
+              <div className="mt-auto w-full min-w-0 shrink-0 pt-6 pb-[max(3.75rem,calc(env(safe-area-inset-bottom)+1.25rem))] sm:pt-8 sm:pb-[max(3.25rem,env(safe-area-inset-bottom))]">
+                <div className="mx-auto w-full max-w-5xl min-w-0">
+                  <div className="rounded-[22px] border border-slate-200 bg-white px-3 py-3 shadow-sm sm:px-5 sm:py-4">
+                    <div className="flex items-start gap-2.5 text-[12px] leading-snug text-slate-600 sm:items-center sm:text-[13px]">
+                      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900/5 text-indigo-700">
+                        <PenLine className="h-4 w-4" />
+                      </span>
+                      <span>Stelle der KI eine Frage oder gib einen Auftrag.</span>
+                    </div>
+
+                    <div className="mt-3 flex flex-nowrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-1.5 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-3 sm:px-3 sm:py-2.5">
+                      <div className="flex shrink-0 items-center">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="inline-flex h-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-2.5 text-[11px] text-slate-700 shadow-sm sm:h-9 sm:px-3"
+                          disabled
+                        >
+                          Anhang
+                        </Button>
+                      </div>
+
+                      <div className="flex min-h-0 min-w-0 flex-1 items-center sm:min-h-[36px]">
+                        <Textarea
+                          noWrapper
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          placeholder="Nachfrage oder neue Frage stellen …"
+                          rows={1}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              void handleSend()
+                            }
+                          }}
+                          className="w-full min-h-0 resize-none border-0 bg-transparent py-1 text-xs leading-snug text-slate-800 outline-none placeholder:text-slate-400 focus:ring-0 sm:min-h-[36px] sm:py-2 sm:leading-5"
+                          style={{ maxHeight: 120 }}
+                        />
+                      </div>
+
+                      <div className="flex shrink-0 justify-end sm:justify-center">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => void handleSend()}
+                          disabled={!input.trim() || sending}
+                          className="h-8 w-8 shrink-0 rounded-full bg-indigo-600 p-0 text-white hover:bg-indigo-700 sm:h-9 sm:w-9 [&>span]:flex [&>span]:h-full [&>span]:w-full [&>span]:items-center [&>span]:justify-center"
+                          aria-label="Senden"
+                        >
+                          <SendHorizontal className="h-4 w-4" strokeWidth={2.25} />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                )
-              })}
+                </div>
+              </div>
             </div>
           </div>
+          <div
+            className={cn(
+              'transition-opacity duration-300',
+              stage === 'chat'
+                ? 'flex min-h-0 flex-1 flex-col opacity-100'
+                : 'pointer-events-none absolute inset-0 opacity-0',
+            )}
+          >
+          <div className="flex min-h-0 w-full min-w-0 max-w-full flex-col gap-4 lg:flex-row lg:items-stretch">
+            <div className="min-h-0 min-w-0 max-w-full flex-1">
+              <Card className="flex min-h-0 max-w-full flex-col overflow-hidden sm:min-h-[72vh]">
+                <div className="min-h-0 flex-1 bg-slate-50/60">
+                  <div
+                    ref={listRef}
+                    className="h-[min(72vh,calc(100dvh-14rem))] min-h-[200px] space-y-3 overflow-y-auto overflow-x-hidden p-3 sm:h-[72vh] sm:min-h-0 sm:space-y-4 sm:p-4"
+                  >
+                    {messages.map((m) => {
+                      const isUser = m.role === 'user'
+                      return (
+                        <div
+                          key={m.id}
+                          className={cn(
+                            'flex w-full',
+                            isUser ? 'justify-end' : 'justify-start',
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'max-w-[min(85%,100%)] min-w-0 break-words rounded-2xl border px-3 py-2.5 text-xs shadow-sm sm:px-4 sm:py-3',
+                              isUser
+                                ? 'border-indigo-200 bg-indigo-600 text-white'
+                                : 'border-slate-200 bg-white text-slate-800',
+                            )}
+                          >
+                            {m.content ? (
+                              <p className="whitespace-pre-wrap break-words leading-relaxed">
+                                {m.content}
+                              </p>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-white/70" />
+                                <span className="h-2 w-2 rounded-full bg-white/70" />
+                                <span className="h-2 w-2 rounded-full bg-white/70" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
 
-          <div className="border-t border-slate-100 bg-white p-4">
-            <div className="mb-3 flex flex-wrap gap-2">
-              {quickPrompts.map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50/50"
-                  onClick={() => setInput(q)}
-                >
-                  {q.length > 42 ? q.slice(0, 42) + '…' : q}
-                </button>
-              ))}
+                <div className="border-t border-slate-100 bg-white p-3 sm:p-4">
+                  <AssistantComposer
+                    value={input}
+                    onChange={setInput}
+                    disabled={!input.trim() || sending}
+                    onSend={() => void handleSend()}
+                    placeholder="Frag nach Hooks, Brand Voice oder einer Strategie…"
+                  />
+                  {lastUserMessage ? (
+                    <p className="mt-2 text-[11px] text-slate-500">
+                      Tipp: Schreib z. B. „Generator-Style“ oder „Brand Voice Tonalität“,
+                      dann passe ich die Antworten an.
+                    </p>
+                  ) : null}
+                </div>
+              </Card>
+
+              {/* Mobile / Tablet: Schnellzugriff (Sidebar ist ab lg sichtbar) */}
+              <div className="space-y-3 lg:hidden">
+                <Card title="Vorschläge" description="Tippe zum Übernehmen" className="shadow-sm">
+                  <div className="flex flex-col gap-2">
+                    {QUICK_SUGGESTIONS.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className="w-full rounded-2xl border border-slate-100 bg-white px-3 py-2.5 text-left text-[11px] leading-snug text-slate-700 shadow-sm active:bg-slate-50 hover:border-indigo-200 hover:bg-indigo-50/30"
+                        onClick={() => setInput(t)}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+                <Card title="Beispielfragen" className="shadow-sm">
+                  <div className="flex flex-col gap-2">
+                    {EXAMPLE_QUESTIONS.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        className="w-full rounded-2xl border border-slate-100 bg-white px-3 py-2.5 text-left text-[11px] leading-snug text-slate-700 shadow-sm active:bg-slate-50 hover:border-indigo-200 hover:bg-indigo-50/30"
+                        onClick={() => setInput(q)}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+              </div>
             </div>
 
-            <div className="flex items-end gap-2">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                rows={1}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    void handleSend()
-                  }
-                }}
-                placeholder="Frag nach Hooks, Brand Voice oder einer Strategie…"
-                className="min-h-[44px] flex-1 resize-none rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
-              />
-              <Button
-                type="button"
-                onClick={() => void handleSend()}
-                disabled={!input.trim() || sending}
-                className="mb-0.5 bg-indigo-600 text-white hover:bg-indigo-700"
+            <div className="hidden w-full min-w-0 max-w-full shrink-0 space-y-4 lg:block lg:w-[min(320px,100%)]">
+              <Card
+                title="Quellen"
+                description="Demo: keine echten Uploads, nur Oberfläche zur Vorschau."
               >
-                <span className="inline-flex items-center gap-2">
-                  <SendHorizontal className="h-4 w-4" />
-                  Senden
-                </span>
-              </Button>
+                <div className="space-y-3 text-xs text-slate-600">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Button type="button" size="sm" variant="secondary" className="w-full shrink-0">
+                      Datei hochladen
+                    </Button>
+                    <Button type="button" size="sm" variant="secondary" className="w-full shrink-0">
+                      Medien hochladen
+                    </Button>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 text-[11px]">
+                    Verknüpfe Wissen oder lade Dateien in diesen Chat.
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                      Beispieldaten
+                    </p>
+                    <div className="grid gap-2">
+                      {[
+                        { t: 'Beispiel: Content-Strategie PDF', s: 'intern' },
+                        { t: 'Beispiel: Markenrichtlinien', s: 'intern' },
+                      ].map((x) => (
+                        <div
+                          key={x.t}
+                          className="flex items-start justify-between gap-2 rounded-2xl border border-slate-100 bg-white px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-[11px] font-medium text-slate-900">
+                              {x.t}
+                            </p>
+                            <p className="truncate text-[10px] text-slate-500">{x.s}</p>
+                          </div>
+                          <span className="mt-0.5 text-[10px] text-indigo-700">★</span>
+                        </div>
+                      ))}
+                      <div className="text-[11px] text-slate-500">+3 weitere</div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card title="Vorschläge" description="Schnellstart (fügt Text ins Eingabefeld ein)">
+                <div className="flex flex-col gap-2">
+                  {QUICK_SUGGESTIONS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className="w-full rounded-2xl border border-slate-100 bg-white px-3 py-2 text-left text-[11px] text-slate-700 shadow-sm hover:border-indigo-200 hover:bg-indigo-50/30"
+                      onClick={() => setInput(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </Card>
+
+              <Card title="Beispielfragen" description="">
+                <div className="flex flex-col gap-2">
+                  {EXAMPLE_QUESTIONS.map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      className="w-full rounded-2xl border border-slate-100 bg-white px-3 py-2 text-left text-[11px] text-slate-700 shadow-sm hover:border-indigo-200 hover:bg-indigo-50/30"
+                      onClick={() => setInput(q)}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </Card>
             </div>
-            {lastUserMessage ? (
-              <p className="mt-2 text-[11px] text-slate-500">
-                Tipp: Schreib z. B. „Generator-Style“ oder „Brand Voice Tonalität“,
-                dann passe ich die Antworten an.
-              </p>
-            ) : null}
           </div>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

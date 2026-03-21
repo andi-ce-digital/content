@@ -55,6 +55,11 @@ export type ContentItem = {
   ctaEnd?: number | null
   bodyDuration?: number | null
   timeToHook?: number | null
+
+  /** Aus `user_account_content` (eigene verbundene Accounts) */
+  isOwnAccountContent?: boolean
+  /** Link zum Original-Post (z. B. Instagram/TikTok) */
+  sourcePostUrl?: string | null
 }
 
 export const contentLibraryMock: ContentItem[] = [

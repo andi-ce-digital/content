@@ -15,11 +15,13 @@ html,
 body,
 #root {
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
+  overflow-x: hidden;
   background:
     radial-gradient(circle at top left, #eef2ff 0, #f8fafc 40%, #ffffff 100%),
     linear-gradient(to bottom, #ffffff, #f8fafc);
@@ -91,5 +93,146 @@ body {
 
 .mobile-menu-panel {
   animation: mobile-menu-panel-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Transkript-Panel (Content Stats) */
+.transcript-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
+}
+.transcript-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.transcript-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.transcript-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #818cf8, #c084fc);
+  border-radius: 999px;
+}
+
+/* KI-Studio: animierter Seitenhintergrund */
+@keyframes ai-bg-mesh-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes ai-orb-float-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(12%, -8%) scale(1.12);
+    opacity: 0.55;
+  }
+}
+
+@keyframes ai-orb-float-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1.05);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(-10%, 14%) scale(0.92);
+    opacity: 0.5;
+  }
+}
+
+@keyframes ai-orb-float-c {
+  0%,
+  100% {
+    transform: translate(-5%, 0) rotate(0deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translate(8%, -12%) rotate(8deg);
+    opacity: 0.42;
+  }
+}
+
+.ai-studio-bg-mesh {
+  background:
+    radial-gradient(ellipse 90% 70% at 15% 20%, rgba(99, 102, 241, 0.28), transparent 55%),
+    radial-gradient(ellipse 70% 60% at 85% 25%, rgba(168, 85, 247, 0.22), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 50% 95%, rgba(236, 72, 153, 0.12), transparent 50%),
+    linear-gradient(165deg, #fafafa 0%, #f4f4f8 40%, #f8f5ff 100%);
+  background-size: 220% 220%;
+  animation: ai-bg-mesh-shift 24s ease-in-out infinite;
+}
+
+.ai-studio-orb {
+  pointer-events: none;
+  will-change: transform;
+}
+
+.ai-studio-orb--a {
+  width: min(72vw, 560px);
+  height: min(72vw, 560px);
+  left: -12%;
+  top: 8%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, transparent 70%);
+  animation: ai-orb-float-a 32s ease-in-out infinite;
+}
+
+.ai-studio-orb--b {
+  width: min(60vw, 480px);
+  height: min(60vw, 480px);
+  right: -8%;
+  bottom: 18%;
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.32) 0%, transparent 68%);
+  animation: ai-orb-float-b 26s ease-in-out infinite;
+}
+
+.ai-studio-orb--c {
+  width: min(50vw, 400px);
+  height: min(50vw, 400px);
+  left: 35%;
+  bottom: -5%;
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.22) 0%, transparent 65%);
+  animation: ai-orb-float-c 20s ease-in-out infinite;
+}
+
+/* KI-Studio Reel showcase (Marquee-Streifen) */
+@keyframes studio-reel-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.studio-reel-marquee-l {
+  animation: studio-reel-marquee 52s linear infinite;
+}
+
+.studio-reel-marquee-r {
+  animation: studio-reel-marquee 44s linear infinite reverse;
+}
+
+.studio-reel-fade-x {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-reel-marquee-l,
+  .studio-reel-marquee-r {
+    animation: none !important;
+  }
 }
 
