@@ -12,7 +12,6 @@ import { SettingsPage } from './pages/SettingsPage'
 import { ContentStatsPage } from './pages/ContentStatsPage'
 import { AiAssistantPage } from './pages/AiAssistantPage'
 import { ContentPlanPage } from './pages/ContentPlanPage'
-import { RemotionEditorPage } from './pages/RemotionEditorPage'
 import { AuthLoginPage } from './pages/AuthLoginPage'
 import { AuthRegisterPage } from './pages/AuthRegisterPage'
 import { AuthProvider } from './auth/AuthContext'
@@ -42,7 +41,6 @@ createRoot(document.getElementById('root')!).render(
             <Route path="content-plan" element={<ContentPlanPage />} />
             <Route path="brand-voice" element={<BrandVoicePage />} />
             <Route path="generator" element={<GeneratorPage />} />
-            <Route path="generator/remotion-editor" element={<RemotionEditorPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>

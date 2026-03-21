@@ -13,7 +13,6 @@ import {
   Sparkles,
   UserCircle2,
   WandSparkles,
-  Clapperboard,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -47,7 +46,7 @@ function App() {
   const userInitials = useMemo(() => userName.slice(0, 2).toUpperCase(), [userName])
 
   return (
-    <div className="flex min-h-screen min-w-0 overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900">
+    <div className="flex min-h-screen min-w-0 bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900">
       <aside className="sticky top-0 z-10 hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white/80 px-4 py-6 backdrop-blur-xl md:flex md:flex-col">
         <div className="mb-8 flex min-h-[28px] items-center justify-between gap-2 sm:min-h-[32px]">
           <NavLink
@@ -198,22 +197,6 @@ function App() {
                 </span>
               </div>
             </NavLink>
-            <NavLink
-              to="/generator/remotion-editor"
-              className={({ isActive }) =>
-                `${navItemBase} ${isActive ? navItemActive : navItemInactive}`
-              }
-            >
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/5 text-slate-600 transition group-hover:bg-slate-900/10">
-                <Clapperboard className="h-3.5 w-3.5" />
-              </span>
-              <div className="flex flex-col">
-                <span>Remotion Editor</span>
-                <span className="text-[10px] font-normal text-slate-400">
-                  Snippets & Render Setup
-                </span>
-              </div>
-            </NavLink>
           </div>
         </nav>
         <div className="mt-auto space-y-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-3">
@@ -260,8 +243,9 @@ function App() {
           </NavLink>
         </div>
       </aside>
-      <main className="relative z-0 flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden">
-        <header className="sticky top-0 z-[100] border-b border-slate-200/80 bg-white/90 px-3 py-3.5 backdrop-blur-xl sm:px-4 sm:py-4">
+      <main className="relative z-0 flex min-h-screen min-w-0 flex-1 flex-col">
+        {/* <lg: fixed am Viewport — verlässt sich zuverlässiger als sticky bei overflow-x auf #root/body; ab lg: sticky */}
+        <header className="top-0 z-[100] border-b border-slate-200/80 bg-white/90 px-3 py-3.5 backdrop-blur-xl max-lg:fixed max-lg:inset-x-0 sm:px-4 sm:py-4 lg:sticky lg:top-0">
           <div className="mx-auto flex w-full max-w-7xl min-w-0 items-center justify-between gap-2">
             <NavLink
               to="/dashboard"
@@ -311,14 +295,14 @@ function App() {
             </div>
           </div>
         </header>
-        <div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-5 pt-4 sm:pt-5">
+        <div className="min-w-0 flex-1 overflow-x-hidden px-4 pb-5 max-lg:pt-[calc(env(safe-area-inset-top,0px)+4.25rem)] lg:pt-5">
           <div className="mx-auto w-full min-w-0 max-w-7xl">
             <Outlet />
           </div>
         </div>
       </main>
       {mobileMenuOpen && (
-        <div className="mobile-menu-fade fixed inset-0 z-50 lg:hidden">
+        <div className="mobile-menu-fade fixed inset-0 z-[110] lg:hidden">
           <button
             type="button"
             aria-label="Menü schließen"
@@ -455,18 +439,6 @@ function App() {
                   <Settings className="h-3.5 w-3.5" />
                 </span>
                 <span>Einstellungen</span>
-              </NavLink>
-              <NavLink
-                to="/generator/remotion-editor"
-                onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `${navItemBase} ${isActive ? navItemActive : navItemInactive}`
-                }
-              >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/5 text-slate-600">
-                  <Clapperboard className="h-3.5 w-3.5" />
-                </span>
-                <span>Remotion Editor</span>
               </NavLink>
               </div>
             </div>

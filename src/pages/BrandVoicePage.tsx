@@ -23,6 +23,8 @@ import { cn } from '../lib/utils'
 type BrandVoiceQuestion = {
   id: string
   label: string
+  /** Kurzes Beispiel, was hier gemeint ist (nur Platzhalter im Formular; bei alten Daten aus der DB optional) */
+  placeholder?: string
 }
 
 type BrandVoiceRecord = {
@@ -56,96 +58,139 @@ function formatBytes(bytes: number | null | undefined) {
 }
 
 const QUESTIONS: BrandVoiceQuestion[] = [
-  { id: 'vision', label: 'Was ist deine langfristige Vision/Legacy?' },
+  {
+    id: 'vision',
+    label: 'Was ist deine langfristige Vision/Legacy?',
+    placeholder:
+      'Z. B. „Die verlässlichste Anlaufstelle für X in DACH – nicht die lauteste.“',
+  },
   {
     id: 'mission',
     label: 'Wie lautet in einem Satz die Mission deiner Brand?',
+    placeholder:
+      'Z. B. „Wir machen Y so simpel, dass Z es in 15 Minuten pro Tag schafft.“',
   },
   {
     id: 'target_core',
     label: 'Wer ist deine primäre Zielgruppe – so konkret wie möglich?',
+    placeholder:
+      'Z. B. Selbstständige 28–42 J., 3–8k €/Monat, wenig Zeit, viel Eigenverantwortung …',
   },
   {
     id: 'target_problem',
     label: 'Was ist das größte Problem/Defizit deiner Zielgruppe heute?',
+    placeholder:
+      'Z. B. Überflutung mit Taktiken, kein klares System, ständiges Umswitchen …',
   },
   {
     id: 'identity',
     label:
       'Welche Identität soll dein Follower durch deine Brand annehmen (Idealbild)?',
+    placeholder:
+      'Z. B. „Der Mensch, der Konstanz hält – ohne Drama und ohne Perfektionismus.“',
   },
   {
     id: 'not_voice',
     label: 'Wie willst du NICHT wirken? Welche Typen willst du vermeiden?',
+    placeholder:
+      'Z. B. Nicht der laute Hustler, keine leeren Motivations-Sprüche ohne Anleitung …',
   },
   {
     id: 'values',
     label: 'Welche 3–5 Werte sind für deine Brand nicht verhandelbar?',
+    placeholder:
+      'Z. B. Ehrlichkeit, Substanz vor Reichweite, keine unrealistischen Versprechen …',
   },
   {
     id: 'beliefs',
     label:
       'Welche Glaubenssätze willst du in deiner Zielgruppe zerstören/neu schreiben?',
+    placeholder:
+      'Z. B. Alt: „Mehr hustlen = mehr Erfolg.“ Neu: „Systeme & Schlaf schlagen rohe Stunden.“',
   },
   {
     id: 'enemy',
     label:
       'Wer oder was ist dein „Feindbild“ (z.B. Durchschnittsmann 2026, Fake-Coaches)?',
+    placeholder:
+      'Z. B. Ein-Klick-Lösungen, generische Guru-Kurse, „passives Einkommen in 7 Tagen“ …',
   },
   {
     id: 'tone',
     label:
       'Wie soll deine Tonalität wahrgenommen werden? (3–5 Adjektive: z.B. ruhig, maskulin, direkt …)',
+    placeholder:
+      'Z. B. ruhig, direkt, mentorhaft, nüchtern, warm aber nicht weich …',
   },
   {
     id: 'lead_vs_open',
     label:
       'Wie viel Prozent Führung vs. Offenheit soll deine Brand haben? (z.B. 70% Führung, 30% Offenheit – beschreibe es)',
+    placeholder:
+      'Z. B. ca. 70 % klare Schritte & Entscheidungen, 30 % Einblicke in Zweifel/Lernen.',
   },
   {
     id: 'doc_vs_motivation',
     label:
       'Was ist der Unterschied zwischen „Motivation“ und „Dokumentation“ in deinem Content?',
+    placeholder:
+      'Z. B. Motivation = kurzer Impuls; Dokumentation = echte Arbeit, Zahlen, Protokolle.',
   },
   {
     id: 'content_principles',
     label:
       'Welche Content-Prinzipien sind fix? (Formate, Zahlen, „No Bullshit“-Regeln, etc.)',
+    placeholder:
+      'Z. B. Hook in den ersten 3 s, max. ein CTA, keine Clickbait ohne Lieferung …',
   },
   {
     id: 'series',
     label:
       'Welche wiederkehrenden Content-Serien oder Rubriken willst du etablieren?',
+    placeholder:
+      'Z. B. „Fehlerfreitag“, „Weekly Audit“, „Tool-Stripdown“, „Behind the Numbers“ …',
   },
   {
     id: 'areas',
     label:
       'Welche Lebensbereiche deckt deine Brand konkret ab? (Körper, Finanzen, Mindset, Stil, Beziehungen …)',
+    placeholder:
+      'Z. B. Training, Ernährung, Schlaf, Mindset, Zeitmanagement – bei uns vor allem …',
   },
   {
     id: 'emotions',
     label:
       'Wie gehst du mit Emotionen im Content um? Was zeigst du, was nicht – und wie rahmst du es?',
+    placeholder:
+      'Z. B. Rückschläge zeigen, aber mit Fokus auf Lösung; kein endloses Jammern.',
   },
   {
     id: 'standards',
     label:
       'Welche Zahlen/Standards sollen immer wieder auftauchen (Routinen, Trainings, Umsatz, etc.)?',
+    placeholder:
+      'Z. B. 4 Trainingseinheiten/Woche, 7–8 h Schlaf, feste Upload-Zeiten …',
   },
   {
     id: 'change_30_days',
     label:
       'Was soll jemand nach 30 Tagen Content-Konsum konkret verändert haben?',
+    placeholder:
+      'Z. B. Einen durchdachten Wochenplan, erste messbare Routine, weniger Chaos im Kopf.',
   },
   {
     id: 'repel',
     label:
       'Wen willst du bewusst abschrecken? Wer soll sich NICHT wohlfühlen mit deiner Brand?',
+    placeholder:
+      'Z. B. Leute, die nur schnelle Hacks wollen und nichts umsetzen.',
   },
   {
     id: 'phase1',
     label:
       'Wie sieht Phase 1 deiner eigenen Reise aus – und was dokumentierst du davon?',
+    placeholder:
+      'Z. B. Phase 1: Validierung – ich zeige Calls, Zahlen, Learnings, keine Fake-Lifestyle-Shots.',
   },
 ]
 
@@ -867,7 +912,7 @@ export function BrandVoicePage() {
                                   return copy
                                 })
                               }}
-                              placeholder="z.B. Brand Messaging Prinzipien"
+                              placeholder="Kurztitel für die Suche (z. B. Claims & verbotene Formulierungen)"
                             />
                             <Textarea
                               label="Kurze Beschreibung"
@@ -884,7 +929,7 @@ export function BrandVoicePage() {
                                 })
                               }}
                               rows={3}
-                              placeholder="Worum geht es im Dokument? (1-2 Sätze)"
+                              placeholder="Thema und Nutzung: Was steht drin? Wofür soll die KI es beim Schreiben nutzen?"
                             />
                           </div>
                         </div>
@@ -997,7 +1042,7 @@ export function BrandVoicePage() {
                     <textarea
                       rows={2}
                       className="w-full resize-none rounded-2xl border border-indigo-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 shadow-sm focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
-                      placeholder='z.B. "THE MAN – 100% Life"'
+                      placeholder="z. B. Brand Voice – Fitness Q2/2026 / interner Projektname"
                       value={wizardName}
                       onChange={(e) => setWizardName(e.target.value)}
                     />
@@ -1010,7 +1055,10 @@ export function BrandVoicePage() {
                     <textarea
                       rows={4}
                       className="w-full resize-none rounded-2xl border border-indigo-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 shadow-sm focus:border-brand-300 focus:ring-2 focus:ring-brand-100"
-                      placeholder="Deine Antwort…"
+                      placeholder={
+                        QUESTIONS[wizardStep - 1].placeholder ??
+                        'Formuliere in eigenen Worten – konkreter Beispiele helfen.'
+                      }
                       value={wizardAnswers[QUESTIONS[wizardStep - 1].id] ?? ''}
                       onChange={(e) =>
                         setWizardAnswers((prev) => ({

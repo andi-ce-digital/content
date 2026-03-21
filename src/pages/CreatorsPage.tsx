@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { X } from 'lucide-react'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { supabase } from '../lib/supabaseClient'
@@ -237,6 +238,7 @@ export function CreatorsPage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const [scrapeOpen, setScrapeOpen] = useState(false)
+  const [reelDetailOpen, setReelDetailOpen] = useState<ContentItemRow | null>(null)
   const [profileFitRatings, setProfileFitRatings] = useState<
     Record<string, 'bad' | 'good' | 'super'>
   >({})
@@ -291,6 +293,19 @@ export function CreatorsPage() {
   }, [selected?.id])
 
   useEffect(() => {
+    setReelDetailOpen(null)
+  }, [selected?.id])
+
+  useEffect(() => {
+    if (!reelDetailOpen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setReelDetailOpen(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [reelDetailOpen])
+
+  useEffect(() => {
     setLastFailedAvatarUrl(null)
   }, [selected?.id, selected?.profile_picture_url])
 
@@ -316,11 +331,12 @@ export function CreatorsPage() {
   }, [selected?.id, selected?.related_profiles])
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row">
-      <section className="w-full lg:w-72 lg:shrink-0">
+    <div className="flex min-w-0 flex-col gap-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:flex-row lg:gap-6">
+      <section className="w-full min-w-0 lg:w-72 lg:shrink-0">
         <Card
           title="Creators"
           description="Alle analysierten Accounts in deinem Workspace."
+          className="overflow-hidden p-4 sm:p-5"
         >
           {error && (
             <p className="mb-2 text-xs text-rose-600">
@@ -335,7 +351,8 @@ export function CreatorsPage() {
               Noch keine Creators – füge zuerst Accounts in der Content Library hinzu.
             </p>
           )}
-          <div className="mt-2 flex max-h-[420px] flex-col gap-1.5 overflow-y-auto pr-1 text-xs">
+          {/* Mobil: horizontal swipe mit Snap; Desktop: klassische Liste */}
+          <div className="mt-2 flex snap-x snap-mandatory gap-2 overflow-x-auto overflow-y-hidden pb-2 pt-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] lg:max-h-[min(52vh,420px)] lg:snap-none lg:flex-col lg:gap-1.5 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-1 lg:[scrollbar-width:thin] [&::-webkit-scrollbar]:hidden lg:[&::-webkit-scrollbar]:block">
             {creators.map((c) => {
               const isActive = selected?.id === c.id
               return (
@@ -343,33 +360,36 @@ export function CreatorsPage() {
                   key={c.id}
                   type="button"
                   onClick={() => setSelected(c)}
-                  className={`flex items-center gap-2 rounded-2xl px-2.5 py-1.5 text-left transition ${
+                  className={`flex min-h-[72px] min-w-[min(260px,82vw)] shrink-0 snap-start items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-xs transition [touch-action:manipulation] lg:min-h-0 lg:min-w-0 lg:w-full lg:snap-none ${
                     isActive
-                      ? 'bg-indigo-50 text-slate-900 ring-1 ring-indigo-100'
-                      : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-100'
+                      ? 'bg-indigo-50 text-slate-900 ring-2 ring-indigo-200/80'
+                      : 'border border-slate-100 bg-white text-slate-700 active:bg-slate-50'
                   }`}
                 >
                   <SafeAvatar
                     src={c.profile_picture_url}
                     fallback={c.creator_name?.charAt(0).toUpperCase() ?? '?'}
-                    className="h-7 w-7 rounded-full text-[11px] font-semibold"
+                    className="h-10 w-10 shrink-0 rounded-full text-xs font-semibold lg:h-7 lg:w-7 lg:text-[11px]"
                   />
-                  <div className="flex flex-col">
-                    <span className="line-clamp-1 text-[11px] font-medium">
+                  <div className="min-w-0 flex flex-1 flex-col gap-0.5">
+                    <span className="line-clamp-2 text-[12px] font-semibold leading-tight lg:line-clamp-1 lg:text-[11px] lg:font-medium">
                       {c.creator_name}
                     </span>
-                    <span className="text-[10px] text-slate-500">
-                      @{c.creator_handle} · {formatFollowers(c.followers)} Follower
+                    <span className="text-[11px] text-slate-500 lg:text-[10px]">
+                      @{c.creator_handle} · {formatFollowers(c.followers)}
                     </span>
                   </div>
                 </button>
               )
             })}
           </div>
+          <p className="mt-1 text-[10px] text-slate-400 lg:hidden">
+            ← Wischen, um Creators zu wechseln →
+          </p>
           <div className="mt-3">
             <Button
               size="sm"
-              className="w-full"
+              className="h-11 w-full text-[13px] [touch-action:manipulation] lg:h-9"
               disabled={!selected}
               onClick={() => setScrapeOpen(true)}
             >
@@ -379,16 +399,16 @@ export function CreatorsPage() {
         </Card>
       </section>
 
-      <section className="flex-1 space-y-4">
-        <Card>
+      <section className="min-w-0 flex-1 space-y-4">
+        <Card className="overflow-hidden p-4 sm:p-5">
           {selected ? (
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between text-xs">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-gradient-to-br from-indigo-200 via-sky-200 to-violet-200 p-[2px]">
+            <div className="flex flex-col gap-5 text-xs md:flex-row md:items-start md:justify-between md:gap-4">
+              <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                <div className="shrink-0 rounded-full bg-gradient-to-br from-indigo-200 via-sky-200 to-violet-200 p-[2px]">
                   <SafeAvatar
                     src={selected.profile_picture_url}
                     fallback={selected.creator_name?.charAt(0).toUpperCase() ?? '?'}
-                    className="h-16 w-16 rounded-full bg-white text-base font-semibold"
+                    className="h-[4.5rem] w-[4.5rem] rounded-full bg-white text-lg font-semibold md:h-16 md:w-16 md:text-base"
                     onExhausted={() => {
                       const failedUrl = normalizeImageUrl(selected.profile_picture_url)
                       if (!failedUrl || lastFailedAvatarUrl === failedUrl) return
@@ -397,9 +417,9 @@ export function CreatorsPage() {
                     }}
                   />
                 </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-900">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-base font-semibold leading-snug text-slate-900 md:text-sm">
                       {selected.creator_name}
                     </p>
                     {selected.verified && (
@@ -431,7 +451,7 @@ export function CreatorsPage() {
                     </span>
                   </div>
                   {selected.biography && (
-                    <p className="mt-2 max-w-xl whitespace-pre-line text-[11px] text-slate-700">
+                    <p className="mt-2 max-w-xl whitespace-pre-line text-[12px] leading-relaxed text-slate-700 md:text-[11px]">
                       {selected.biography}
                     </p>
                   )}
@@ -440,32 +460,39 @@ export function CreatorsPage() {
                       href={selected.external_link}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:underline"
+                      className="mt-2 inline-flex max-w-full items-start gap-1 break-all text-[12px] font-medium text-indigo-600 [touch-action:manipulation] hover:underline md:text-[11px]"
                     >
                       {selected.external_link}
                     </a>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 md:flex-col md:items-end md:gap-1">
-                <Button size="sm">Profil analysieren</Button>
-                <Button size="sm" variant="secondary">
+              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:w-auto md:max-w-xs md:flex md:flex-col md:items-stretch md:gap-2 lg:items-end">
+                <Button size="sm" className="h-11 w-full min-w-0 [touch-action:manipulation] lg:h-9 md:w-full">
+                  Profil analysieren
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-11 w-full min-w-0 [touch-action:manipulation] lg:h-9 md:w-full"
+                >
                   Reels aktualisieren
                 </Button>
               </div>
             </div>
           ) : (
             <p className="text-xs text-slate-500">
-              Wähle links einen Creator aus, um das Profil zu sehen.
+              Wähle oben einen Creator aus, um das Profil zu sehen.
             </p>
           )}
         </Card>
 
         {selected && (
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1.4fr),minmax(0,1.2fr)]">
+          <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1.4fr),minmax(0,1.2fr)] md:gap-5">
             <Card
               title="Reels von diesem Creator"
               description="Ausschnitt deiner analysefähigen Reels."
+              className="min-w-0 p-4 sm:p-5"
             >
               {loadingContent && (
                 <p className="text-xs text-slate-500">Lade Reels…</p>
@@ -475,11 +502,13 @@ export function CreatorsPage() {
                   Noch keine Reels für diesen Creator importiert.
                 </p>
               )}
-              <div className="mt-3 grid grid-cols-2 gap-3 text-xs xl:grid-cols-3">
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:gap-3 xl:grid-cols-3">
                 {pagedReels.map((item) => (
-                  <article
+                  <button
                     key={item.id}
-                    className="rounded-3xl border border-slate-100 bg-white p-3 shadow-sm"
+                    type="button"
+                    onClick={() => setReelDetailOpen(item)}
+                    className="group min-w-0 rounded-2xl border border-slate-100 bg-white p-2 text-left shadow-sm transition [touch-action:manipulation] hover:border-indigo-200 hover:shadow-md active:scale-[0.99] sm:rounded-3xl sm:p-3"
                   >
                     <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl bg-slate-100">
                       <SafeReelPreview
@@ -492,30 +521,31 @@ export function CreatorsPage() {
                           : 'Reel'}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-[11px] font-semibold text-slate-900">
+                    <p className="mt-1.5 line-clamp-2 text-[11px] font-semibold leading-snug text-slate-900 sm:mt-2">
                       {item.title || item.hook || 'Ohne Titel'}
                     </p>
-                    <p className="mt-1 text-[10px] text-slate-500">
+                    <p className="mt-0.5 text-[10px] text-slate-500">
                       {item.views?.toLocaleString('de-DE') ?? 0} Views ·{' '}
                       {item.engagement_rate != null
                         ? `${(item.engagement_rate * 100).toFixed(1)} %`
                         : '—'}
                     </p>
-                  </article>
+                  </button>
                 ))}
               </div>
               {contentItems.length > 0 && (
-                <div className="mt-3 flex items-center justify-between rounded-3xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                  <p>
+                <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:rounded-3xl sm:py-2">
+                  <p className="text-center sm:text-left">
                     Seite <span className="font-semibold">{safeReelsPage}</span> von{' '}
                     <span className="font-semibold">{totalReelPages}</span> ·{' '}
                     {contentItems.length} Reels
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
                     <Button
                       type="button"
                       size="sm"
                       variant="secondary"
+                      className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 [touch-action:manipulation]"
                       onClick={() => setReelsPage((p) => Math.max(1, p - 1))}
                       disabled={safeReelsPage === 1}
                     >
@@ -525,6 +555,7 @@ export function CreatorsPage() {
                       type="button"
                       size="sm"
                       variant="secondary"
+                      className="h-10 min-h-[44px] sm:h-9 sm:min-h-0 [touch-action:manipulation]"
                       onClick={() =>
                         setReelsPage((p) => Math.min(totalReelPages, p + 1))
                       }
@@ -540,8 +571,9 @@ export function CreatorsPage() {
             <Card
               title="Ähnliche Profile"
               description="Von Instagram vorgeschlagene verwandte Accounts."
+              className="min-w-0 p-4 sm:p-5"
             >
-              <div className="grid gap-2 text-[11px] sm:grid-cols-2">
+              <div className="grid gap-2.5 text-[11px] sm:grid-cols-2 sm:gap-2">
                 {selected.related_profiles && selected.related_profiles.length > 0 ? (
                   selected.related_profiles.map((raw) => {
                     const parsed = parseRelatedProfile(raw)
@@ -550,9 +582,9 @@ export function CreatorsPage() {
                     return (
                       <div
                         key={parsed.id}
-                        className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-3 py-2.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white px-3 py-3 shadow-sm transition active:scale-[0.99] sm:flex-row sm:items-center sm:justify-between sm:py-2.5 sm:hover:-translate-y-0.5 sm:hover:shadow-md"
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-2.5">
                           <div className="rounded-full bg-gradient-to-br from-slate-200 via-indigo-100 to-sky-100 p-[1.5px]">
                             <SafeAvatar
                               src={parsed.profile_pic_url}
@@ -582,7 +614,7 @@ export function CreatorsPage() {
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3 sm:border-0 sm:pt-0">
                           <button
                             type="button"
                             aria-label="Zu Creator-Library hinzufügen"
@@ -590,7 +622,7 @@ export function CreatorsPage() {
                               setConfirmError(null)
                               setConfirmProfile(parsed)
                             }}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm transition hover:bg-emerald-600"
+                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm transition [touch-action:manipulation] hover:bg-emerald-600 sm:h-7 sm:w-7"
                           >
                             <svg
                               viewBox="0 0 20 20"
@@ -608,6 +640,7 @@ export function CreatorsPage() {
                             size="sm"
                             variant="secondary"
                             type="button"
+                            className="min-h-[44px] flex-1 sm:min-h-0 sm:flex-initial [touch-action:manipulation]"
                             onClick={() => {
                               if (profileUrl)
                                 window.open(profileUrl, '_blank', 'noopener,noreferrer')
@@ -631,8 +664,8 @@ export function CreatorsPage() {
         )}
       </section>
       {confirmProfile && selected && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4">
-          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-5 shadow-xl">
+        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/40 px-0 pb-0 pt-8 sm:items-center sm:p-4">
+          <div className="max-h-[min(90dvh,640px)] w-full max-w-md overflow-y-auto rounded-t-[1.75rem] border border-slate-200 bg-white p-5 shadow-xl sm:rounded-3xl">
             <h2 className="text-sm font-semibold text-slate-900">
               Account zur Creator-Library hinzufügen?
             </h2>
@@ -649,12 +682,12 @@ export function CreatorsPage() {
                 {confirmError}
               </p>
             )}
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="flex-1 text-slate-600 hover:bg-slate-100"
+                className="h-11 flex-1 text-slate-600 hover:bg-slate-100 sm:h-9 [touch-action:manipulation]"
                 disabled={savingProfile}
                 onClick={() => {
                   setConfirmProfile(null)
@@ -666,7 +699,7 @@ export function CreatorsPage() {
               <Button
                 type="button"
                 size="sm"
-                className="flex-1 bg-emerald-500 text-white hover:bg-emerald-600"
+                className="h-11 flex-1 bg-emerald-500 text-white hover:bg-emerald-600 sm:h-9 [touch-action:manipulation]"
                 disabled={savingProfile}
                 onClick={async () => {
                   if (!supabase || !user || !confirmProfile) return
@@ -696,27 +729,30 @@ export function CreatorsPage() {
         </div>
       )}
       {scrapeOpen && selected && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 px-4">
-          <div className="w-full max-w-4xl rounded-3xl border border-slate-200 bg-white p-5 shadow-xl">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">
-                  Creator Scrape: @{selected.creator_handle}
-                </h2>
-                <p className="mt-1 text-xs text-slate-600">
-                  Related Profiles mit Metadaten bewerten: Schlecht passt, Gut passt oder Super fit.
-                </p>
+        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-slate-950/40 px-0 pb-0 pt-10 sm:items-center sm:p-4">
+          <div className="flex max-h-[min(92dvh,900px)] w-full max-w-4xl flex-col rounded-t-[1.75rem] border border-slate-200 bg-white shadow-xl sm:max-h-[85vh] sm:rounded-3xl">
+            <div className="shrink-0 border-b border-slate-100 p-4 sm:p-5 sm:pb-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 pr-2">
+                  <h2 className="text-base font-semibold leading-snug text-slate-900 sm:text-sm">
+                    Creator Scrape: @{selected.creator_handle}
+                  </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                    Related Profiles mit Metadaten bewerten: Schlecht passt, Gut passt oder Super fit.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-10 w-full shrink-0 sm:h-9 sm:w-auto [touch-action:manipulation]"
+                  onClick={() => setScrapeOpen(false)}
+                >
+                  Schließen
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setScrapeOpen(false)}
-              >
-                Schließen
-              </Button>
             </div>
 
-            <div className="mt-4 max-h-[68vh] space-y-2 overflow-y-auto pr-1">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:max-h-[min(68vh,560px)] sm:p-5 sm:pt-0">
               {scrapeProfiles.length === 0 ? (
                 <p className="rounded-2xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
                   Keine related profiles gefunden.
@@ -780,10 +816,11 @@ export function CreatorsPage() {
                         </p>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="min-h-[44px] [touch-action:manipulation] sm:min-h-0"
                           onClick={() => {
                             if (profileUrl) window.open(profileUrl, '_blank', 'noopener,noreferrer')
                           }}
@@ -794,6 +831,7 @@ export function CreatorsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="min-h-[44px] [touch-action:manipulation] sm:min-h-0"
                           onClick={() =>
                             setProfileFitRatings((prev) => ({ ...prev, [p.id]: 'bad' }))
                           }
@@ -803,6 +841,7 @@ export function CreatorsPage() {
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="min-h-[44px] [touch-action:manipulation] sm:min-h-0"
                           onClick={() =>
                             setProfileFitRatings((prev) => ({ ...prev, [p.id]: 'good' }))
                           }
@@ -811,6 +850,7 @@ export function CreatorsPage() {
                         </Button>
                         <Button
                           size="sm"
+                          className="min-h-[44px] [touch-action:manipulation] sm:min-h-0"
                           onClick={() =>
                             setProfileFitRatings((prev) => ({ ...prev, [p.id]: 'super' }))
                           }
@@ -822,6 +862,120 @@ export function CreatorsPage() {
                   )
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {reelDetailOpen && (
+        <div
+          className="fixed inset-0 z-[120] flex items-end justify-center p-0 lg:items-center lg:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reel-detail-title"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/45 [touch-action:none]"
+            aria-label="Schließen"
+            onClick={() => setReelDetailOpen(null)}
+          />
+          <div className="relative z-10 flex max-h-[min(92dvh,800px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.75rem] border border-slate-200 bg-white shadow-2xl lg:max-h-[min(90vh,720px)] lg:rounded-3xl">
+            <div className="shrink-0 border-b border-slate-100">
+              <div className="flex justify-center pt-2 lg:hidden" aria-hidden>
+                <div className="h-1 w-10 rounded-full bg-slate-200" />
+              </div>
+              <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+                <h2
+                  id="reel-detail-title"
+                  className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900"
+                >
+                  Reel-Details
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setReelDetailOpen(null)}
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 transition [touch-action:manipulation] hover:bg-slate-100 lg:h-9 lg:w-9"
+                  aria-label="Schließen"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 sm:px-5">
+              <div className="mx-auto w-full max-w-[min(100%,320px)]">
+                <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl bg-black shadow-inner">
+                  {(() => {
+                    const mediaSrc = normalizeImageUrl(reelDetailOpen.media_url)
+                    if (mediaSrc) {
+                      return (
+                        <video
+                          src={mediaSrc}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="h-full w-full object-contain"
+                          poster={normalizeImageUrl(reelDetailOpen.thumbnail_url) ?? undefined}
+                        />
+                      )
+                    }
+                    return (
+                      <SafeReelPreview
+                        thumbnail={reelDetailOpen.thumbnail_url}
+                        media={reelDetailOpen.media_url}
+                      />
+                    )
+                  })()}
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-3 text-xs">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                    Titel
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold text-slate-900">
+                    {reelDetailOpen.title || reelDetailOpen.hook || 'Ohne Titel'}
+                  </p>
+                </div>
+                {reelDetailOpen.hook &&
+                  reelDetailOpen.title &&
+                  reelDetailOpen.hook !== reelDetailOpen.title && (
+                    <div>
+                      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
+                        Hook
+                      </p>
+                      <p className="mt-0.5 whitespace-pre-line text-slate-700">
+                        {reelDetailOpen.hook}
+                      </p>
+                    </div>
+                  )}
+                <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-center">
+                  <div>
+                    <p className="text-[10px] text-slate-500">Views</p>
+                    <p className="mt-0.5 font-semibold text-slate-900">
+                      {reelDetailOpen.views?.toLocaleString('de-DE') ?? '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500">Engagement</p>
+                    <p className="mt-0.5 font-semibold text-slate-900">
+                      {reelDetailOpen.engagement_rate != null
+                        ? `${(reelDetailOpen.engagement_rate * 100).toFixed(1)} %`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500">Dauer</p>
+                    <p className="mt-0.5 font-semibold text-slate-900">
+                      {reelDetailOpen.duration_seconds != null
+                        ? `${Math.round(reelDetailOpen.duration_seconds)} s`
+                        : '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
